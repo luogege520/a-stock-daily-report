@@ -6,11 +6,11 @@
 
 ## ✨ 功能特点
 
-- 🤖 **自动化生成**：使用 AI 自动生成专业的市场复盘报告
+- 🤖 **自动化生成**：使用 Google Gemini AI 自动生成专业的市场复盘报告
 - 📊 **全面数据**：涵盖指数、板块、资金流向、热点题材等
 - 📧 **邮件推送**：自动发送到指定邮箱，支持 HTML 格式
 - ⏰ **定时运行**：每个交易日晚上 21:00 自动执行
-- 📁 **报告存档**：自动保存历史报告，方便回顾
+- 📁 **报告存档**：自动保存历史报告,方便回顾
 
 ## 📋 报告内容
 
@@ -36,12 +36,20 @@
 
 | Secret 名称 | 说明 | 示例 |
 |------------|------|------|
-| `STEPFUN_API_KEY` | StepFun API 密钥 | `sk-xxxxx` |
+| `GEMINI_API_KEY` | Google Gemini API 密钥 | `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` |
 | `SENDER_EMAIL` | 发件人邮箱 | `your-email@gmail.com` |
 | `SENDER_PASSWORD` | 邮箱授权码 | `your-app-password` |
 | `RECIPIENT_EMAIL` | 收件人邮箱 | `recipient@example.com` |
 | `SMTP_SERVER` | SMTP 服务器 | `smtp.gmail.com` |
 | `SMTP_PORT` | SMTP 端口 | `587` |
+
+#### 🔑 获取 Gemini API 密钥
+
+1. 访问 [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. 登录您的 Google 账号
+3. 点击 "Create API Key" 或 "Get API Key"
+4. 复制生成的 API 密钥
+5. 将密钥添加到 GitHub Secrets 中的 `GEMINI_API_KEY`
 
 #### 📧 邮箱配置说明
 
@@ -106,7 +114,7 @@ pip install -r requirements.txt
 
 # 创建 .env 文件
 cat > .env << EOF
-STEPFUN_API_KEY=your_api_key
+GEMINI_API_KEY=your_gemini_api_key
 SENDER_EMAIL=your_email@gmail.com
 SENDER_PASSWORD=your_password
 RECIPIENT_EMAIL=recipient@example.com
@@ -176,15 +184,21 @@ recipient1@example.com,recipient2@example.com
 ### Q4: 报告生成失败怎么办？
 
 **A:** 
-1. 检查 StepFun API 密钥是否正确
-2. 检查 API 额度是否充足
-3. 查看 GitHub Actions 日志中的详细错误信息
+1. 检查 Gemini API 密钥是否正确
+2. 检查 API 额度是否充足（免费版有限制）
+3. 确认网络可以访问 Google 服务
+4. 查看 GitHub Actions 日志中的详细错误信息
 
 ### Q5: 如何修改报告内容？
 
 **A:** 编辑 `generate_report.py` 中的提示词模板，可以自定义报告的结构、内容和风格。
 
 ## 📝 更新日志
+
+### v2.1.0 (2026-01-29)
+- 🔄 迁移到 Google Gemini API
+- 🤖 使用 gemini-1.5-pro 模型
+- 📝 更新所有配置文档
 
 ### v1.0.0 (2026-01-27)
 - ✨ 初始版本发布
@@ -203,9 +217,9 @@ MIT License
 
 ## 🙏 致谢
 
-- [StepFun](https://www.stepfun.com/) - AI 模型支持
+- [Google Gemini](https://ai.google.dev/) - AI 模型支持
 - [GitHub Actions](https://github.com/features/actions) - 自动化运行
-- 数据来源：Wind、东方财富、证券时报、金十数据
+- 数据来源：AkShare 开源金融数据接口
 
 ## 📮 联系方式
 

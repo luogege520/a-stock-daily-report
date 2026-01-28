@@ -27,7 +27,7 @@ jobs:
     
     - name: Generate and send report
       env:
-        STEPFUN_API_KEY: ${{ secrets.STEPFUN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
         SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
         RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
