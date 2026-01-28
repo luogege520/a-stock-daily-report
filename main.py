@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-主程序：生成报告并发送邮件
+主程序：生成报告并发送邮件 - AkShare 版本
 """
 
 import os
@@ -12,42 +12,42 @@ from send_email import EmailSender
 
 
 def main():
-    """主函数"""
     print("=" * 60)
-    print("🚀 A股晚间复盘报告自动生成系统")
+    print("A-Share Evening Review Report System v2.0.0 (AkShare)")
     print("=" * 60)
-    print(f"⏰ 运行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Run time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     
     try:
-        # 1. 生成报告
-        print("📊 步骤 1/2: 生成复盘报告")
+        print("Step 1/2: Generating report")
         print("-" * 60)
         generator = AStockReportGenerator()
         report_content = generator.generate_report()
         report_filepath = generator.save_report(report_content)
         print()
         
-        # 2. 发送邮件
-        print("📧 步骤 2/2: 发送邮件")
+        print("Step 2/2: Sending email")
         print("-" * 60)
         
-        # 从环境变量获取收件人邮箱
         recipient_email = os.getenv('RECIPIENT_EMAIL')
         if not recipient_email:
-            print("⚠️  未设置 RECIPIENT_EMAIL 环境变量，跳过邮件发送")
-            print("💡 提示: 设置 RECIPIENT_EMAIL 环境变量以启用邮件发送功能")
+            print("Warning: RECIPIENT_EMAIL not set, skipping email")
+            print("Tip: Set RECIPIENT_EMAIL to enable email sending")
         else:
-            sender = EmailSender()
-            success = sender.send_report(recipient_email, report_filepath)
-            
-            if not success:
-                print("⚠️  邮件发送失败，但报告已生成")
+            try:
+                sender = EmailSender()
+                success = sender.send_report(recipient_email, report_filepath)
+                
+                if not success:
+                    print("Warning: Email sending failed, but report generated")
+            except Exception as e:
+                print(f"Warning: Email error: {e}")
+                print("Tip: Report generated, please check manually")
         
         print()
         print("=" * 60)
-        print("✅ 任务完成！")
-        print(f"📄 报告文件: {report_filepath}")
+        print("Task completed!")
+        print(f"Report file: {report_filepath}")
         print("=" * 60)
         
         return 0
@@ -55,7 +55,7 @@ def main():
     except Exception as e:
         print()
         print("=" * 60)
-        print(f"❌ 错误: {e}")
+        print(f"Error: {e}")
         print("=" * 60)
         import traceback
         traceback.print_exc()

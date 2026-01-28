@@ -1,273 +1,249 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-A股晚间复盘报告生成器
-自动生成每日A股市场复盘报告
+A股晚间复盘报告生成器 - AkShare 版本
 """
 
 import os
 import sys
 from datetime import datetime
-import requests
-from typing import Dict, List, Optional
+from typing import Dict, Optional
+from fetch_data import AStockDataFetcher
 
 
 class AStockReportGenerator:
     """A股复盘报告生成器"""
     
     def __init__(self, api_key: Optional[str] = None):
-        """
-        初始化报告生成器
-        
-        Args:
-            api_key: StepFun API密钥，如果不提供则从环境变量读取
-        """
         self.api_key = api_key or os.getenv('STEPFUN_API_KEY')
         if not self.api_key:
-            raise ValueError("请设置 STEPFUN_API_KEY 环境变量")
-        
-        self.api_base = "https://api.stepfun.com/v1"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-    
-    def search_market_data(self, query: str, topk: int = 10) -> List[Dict]:
-        """
-        搜索市场数据
-        
-        Args:
-            query: 搜索查询
-            topk: 返回结果数量
-            
-        Returns:
-            搜索结果列表
-        """
-        # 这里使用 StepFun 的搜索 API
-        # 实际实现需要根据 StepFun API 文档调整
-        print(f"🔍 搜索: {query}")
-        
-        # 模拟搜索结果（实际应该调用真实API）
-        return []
+            raise ValueError("Please set STEPFUN_API_KEY environment variable")
+        self.data_fetcher = AStockDataFetcher()
     
     def generate_report(self, date_str: Optional[str] = None) -> str:
-        """
-        生成复盘报告
-        
-        Args:
-            date_str: 日期字符串，格式：YYYY-MM-DD，默认为今天
-            
-        Returns:
-            生成的报告内容（Markdown格式）
-        """
         if date_str is None:
             date_str = datetime.now().strftime("%Y-%m-%d")
         
-        print(f"📊 开始生成 {date_str} 的A股复盘报告...")
+        print(f"\nGenerating A-Share report for {date_str}...")
+        print("="*60)
         
-        # 构建提示词
-        prompt = self._build_prompt(date_str)
+        print("\nStep 1/3: Fetching market data (AkShare)")
+        market_data = self.data_fetcher.fetch_all_data()
         
-        # 调用 AI 生成报告
+        if not market_data.get('指数数据'):
+            print("Warning: No index data fetched")
+        
+        print("\nStep 2/3: Building prompt")
+        prompt = self._build_prompt_with_data(date_str, market_data)
+        
+        print("\nStep 3/3: Generating report")
         report_content = self._call_ai_api(prompt)
+        
+        print("\n" + "="*60)
+        print("Report generation completed")
+        print("="*60 + "\n")
         
         return report_content
     
-    def _build_prompt(self, date_str: str) -> str:
-        """构建生成报告的提示词"""
+    def _build_prompt_with_data(self, date_str: str, market_data: Dict) -> str:
         year, month, day = date_str.split('-')
+        real_data = self.data_fetcher.format_data_for_prompt(market_data)
         
-        prompt = f"""请帮我生成一份【{year}年{month}月{day}日】A股晚间复盘报告，要求如下：
+        prompt = f"""Please generate an A-Share evening review report for [{year}-{month}-{day}] based on the following **real market data**.
 
-## 一、数据收集范围
-1. A股主要指数：上证指数、深证成指、创业板指、科创50、北证50（收盘点位、涨跌幅、成交额、涨跌家数）
-2. 外围市场：美股三大指数（道琼斯、标普500、纳斯达克）、欧洲主要指数（富时100、DAX、CAC40）
-3. 板块表现：领涨板块TOP10、领跌板块TOP5（涨跌幅、核心驱动因素）
-4. 资金流向：
-   - 主力资金净流入/流出TOP10个股
-   - 行业资金流向TOP5
-   - **北向资金流向**（沪股通、深股通净流入额，重点加仓/减仓板块，净流入/流出TOP10个股）
-5. 热点题材：当日3-5个核心热点的深度解析（催化剂、产业逻辑、涨停个股）
-6. 政策面：货币政策、产业政策、监管态度
-7. 技术面：上证指数和创业板指的技术形态、支撑阻力位、趋势判断
+{real_data}
 
-## 二、报告结构（Markdown格式）
+**Important Instructions**:
+1. You MUST use the above real data as the foundation of the report
+2. Index points, changes, and volumes MUST match the real data exactly
+3. Up/down counts MUST match the real data exactly
+4. Sector and capital flow data MUST be based on real data
+5. DO NOT fabricate or modify any numerical data
+6. You may provide reasonable market analysis and investment advice based on the data
 
-### 1. 市场概况
-- 主要指数表现（表格形式）
-- 市场特征总结（成交额、涨跌家数、市场情绪）
-- 外围市场表现（美股、欧股）
+## Report Requirements
 
-### 2. 板块表现分析
-- 领涨板块TOP10（表格：排名、板块名称、涨跌幅、核心驱动因素）
-- 领跌板块（表格：板块名称、涨跌幅、调整原因）
+### Report Structure (Markdown format)
 
-### 3. 资金流向分析
-- 主力资金净流入TOP10（表格：排名、股票名称、净流入金额、涨跌幅、所属板块）
-- 主力资金净流出TOP5（表格：排名、股票名称、净流出金额、涨跌幅、所属板块）
-- 行业资金流向（净流入/流出行业TOP5）
-- **北向资金流向**：
-  - 当日净流入情况（沪股通、深股通、合计）
-  - 北向资金重点加仓板块TOP5
-  - 北向资金重点减仓板块TOP5
-  - 北向资金净流入TOP10个股（表格）
-  - 北向资金净流出TOP5个股（表格）
-  - 北向资金流向特征分析（偏好方向、规避方向）
-  - 北向资金趋势（近5日、近10日累计流向）
+#### 1. Market Overview
+- Index performance (use real data, accurate to 2 decimal places)
+- Market characteristics (based on real up/down counts, volume)
+- Overseas market performance (brief mention)
 
-### 4. 热点题材深度解析
-针对当日3-5个核心热点，每个热点包括：
-- 核心催化剂（消息面、政策面）
-- 产业逻辑（需求、技术、供应等）
-- 涨停个股列表
-- 后续关注方向
+#### 2. Sector Analysis
+- Top 10 gaining sectors (use real data)
+- Top 5 losing sectors (use real data)
+- Analysis of sector drivers
 
-### 5. 政策与宏观面
-- 货币政策（央行操作、政策表态）
-- 产业政策（设备更新、消费刺激、战略新兴产业）
-- 监管态度（风险提示）
+#### 3. Capital Flow Analysis
+- Top 10 main capital inflow/outflow (use real data)
+- North-bound capital flow (use real data)
+- Capital flow characteristics
 
-### 6. 技术面分析
-- 上证指数：当前位置、技术形态、支撑阻力位、量能分析、趋势判断
-- 创业板指：当前位置、技术形态、支撑阻力位、趋势判断
+#### 4. Hot Topics Analysis
+- Based on leading sectors and capital flow, analyze 3-5 core themes
+- Each theme includes: catalyst, industry logic, representative stocks
 
-### 7. 投资策略建议
-- 短期策略（1-2周）：核心主线、防御策略、操作建议
-- 中长期策略（1-3个月）：核心赛道、配置建议（成长股/价值股/现金比例）
+#### 5. Technical Analysis
+- Shanghai Composite: technical analysis based on real price ({market_data['指数数据'].get('上证指数', {}).get('收盘点位', 0):.2f})
+- ChiNext: technical analysis based on real price ({market_data['指数数据'].get('创业板指', {}).get('收盘点位', 0):.2f})
+- Support/resistance levels, trend judgment
 
-### 8. 风险提示
-列出5大风险：政策风险、外部风险、业绩风险、技术风险、流动性风险
+#### 6. Investment Strategy
+- Short-term strategy (1-2 weeks)
+- Medium-term strategy (1-3 months)
+- Reasonable suggestions based on market performance
 
-### 9. 总结与展望
-- 当日市场特征
-- 核心驱动因素
-- 全球市场联动
-- 后市展望（短期、中期、操作策略）
+#### 7. Risk Warning
+- Five risk dimensions
 
-## 三、格式要求
+#### 8. Summary and Outlook
+- Daily market characteristics
+- Market outlook
 
-1. **表格格式：** 所有数据用Markdown表格呈现，清晰易读
-2. **数据标注：** 
-   - 上涨数据用红色标注（如：+0.33%）
-   - 下跌数据用绿色标注（如：-0.57%）
-   - 重要数据加粗
-3. **符号使用：**
-   - 🔥 表示热点题材
-   - 🚀 表示商业航天等科技题材
-   - 💰 表示贵金属、资金类题材
-   - ✅ 表示正面因素
-   - ⚠️ 表示风险提示
-4. **层级结构：** 使用二级、三级标题清晰划分章节
-5. **数据精度：** 
-   - 点位保留2位小数
-   - 涨跌幅保留2位小数
-   - 资金流向保留2位小数（亿元）
-6. **语言风格：** 专业、客观、简洁，避免主观臆断
+### Format Requirements
 
-## 四、数据来源标注
+1. **Data Accuracy**:
+   - All values must match the provided real data exactly
+   - Keep 2 decimal places for points
+   - Keep 2 decimal places for changes, with +/- sign
+   - Keep 2 decimal places for volume
 
-报告末尾注明：
-- 报告生成时间
-- 数据来源（如：Wind、东方财富、证券时报、金十数据）
-- 免责声明
+2. **Table Format**:
+   - Use Markdown tables
+   - Clear data alignment
 
-请严格按照以上结构和格式生成报告。"""
+3. **Symbol Usage**:
+   - 🔥 Hot topics
+   - 📊 Data analysis
+   - 💰 Capital flow
+   - ✅ Positive factors
+   - ⚠️ Risk warning
+
+4. **Language Style**:
+   - Professional, objective, concise
+   - Based on data analysis, avoid subjective speculation
+
+### Data Source Attribution
+
+Must note at the end of the report:
+
+```markdown
+---
+
+## Data Source
+
+- **Data Time**: {market_data['获取时间']}
+- **Data Source**: {market_data['数据来源']}
+- **Data Accuracy**: ✅ Real market data
+
+## Disclaimer
+
+This report is generated based on public market data and is for reference only. 
+It does not constitute any investment advice.
+Investment involves risks. Please be cautious.
+
+---
+
+**Report Generated**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}  
+**Version**: v2.0.0 (AkShare)
+```
+
+Please generate the report strictly according to the above requirements, **ensuring the accuracy of all numerical data**."""
         
         return prompt
     
     def _call_ai_api(self, prompt: str) -> str:
-        """
-        调用 AI API 生成报告
-        
-        Args:
-            prompt: 提示词
-            
-        Returns:
-            生成的报告内容
-        """
-        print("🤖 调用 AI 生成报告...")
-        
-        # 这里需要实现实际的 API 调用
-        # 由于需要使用 StepFun 的特定 API，这里提供一个框架
-        
-        url = f"{self.api_base}/chat/completions"
-        
-        payload = {
-            "model": "step-1-32k",  # 使用合适的模型
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "你是一个专业的A股市场分析师，擅长撰写详细的市场复盘报告。"
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "temperature": 0.7,
-            "max_tokens": 16000
-        }
+        print("Calling StepFun AI to generate report...")
         
         try:
-            response = requests.post(url, json=payload, headers=self.headers, timeout=300)
+            import requests
+            
+            url = "https://api.stepfun.com/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": "step-1-flash",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a professional A-share market analyst. You must strictly base your analysis on the provided real data and cannot fabricate or modify any values. Your analysis should be objective and professional, providing reasonable market interpretation and investment advice based on the data."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.3,
+                "max_tokens": 16000
+            }
+            
+            print("  Waiting for AI response...")
+            response = requests.post(url, json=payload, headers=headers, timeout=300)
             response.raise_for_status()
             
             result = response.json()
             content = result['choices'][0]['message']['content']
             
-            print("✅ 报告生成成功！")
+            print("  AI report generated successfully")
             return content
             
         except Exception as e:
-            print(f"❌ 生成报告失败: {e}")
-            raise
+            print(f"  AI generation failed: {e}")
+            print("  Returning basic data report")
+            return self._generate_fallback_report(prompt)
+    
+    def _generate_fallback_report(self, prompt: str) -> str:
+        return f"""# A-Share Evening Review Report
+
+## Notice
+
+AI service is temporarily unavailable. Below is the basic data report.
+
+{prompt}
+
+---
+
+**Note**: Please check STEPFUN_API_KEY configuration or try again later.
+"""
     
     def save_report(self, content: str, output_dir: str = "reports") -> str:
-        """
-        保存报告到文件
-        
-        Args:
-            content: 报告内容
-            output_dir: 输出目录
-            
-        Returns:
-            保存的文件路径
-        """
-        # 创建输出目录
         os.makedirs(output_dir, exist_ok=True)
         
-        # 生成文件名
         date_str = datetime.now().strftime("%Y-%m-%d")
         filename = f"A股晚间复盘报告_{date_str}.md"
         filepath = os.path.join(output_dir, filename)
         
-        # 保存文件
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        print(f"💾 报告已保存到: {filepath}")
+        print(f"Report saved to: {filepath}")
         return filepath
 
 
 def main():
-    """主函数"""
     try:
-        # 创建报告生成器
+        print("\n" + "="*60)
+        print("A-Share Evening Review Report System v2.0.0 (AkShare)")
+        print("="*60 + "\n")
+        
         generator = AStockReportGenerator()
-        
-        # 生成报告
         report_content = generator.generate_report()
-        
-        # 保存报告
         filepath = generator.save_report(report_content)
         
-        print(f"\n🎉 报告生成完成！")
-        print(f"📄 文件路径: {filepath}")
+        print(f"\nReport generation completed!")
+        print(f"File path: {filepath}")
+        print("\n" + "="*60)
         
         return filepath
         
     except Exception as e:
-        print(f"\n❌ 错误: {e}")
+        print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
