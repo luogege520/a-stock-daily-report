@@ -25,6 +25,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: List available Gemini models
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        echo "Listing available Gemini models..."
+        python list_gemini_models.py
+    
     - name: Test Gemini API connection
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
