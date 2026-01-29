@@ -25,6 +25,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Test Gemini API connection
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        echo "Testing Gemini API connection..."
+        python test_gemini_simple.py
+    
     - name: Generate and send report
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
