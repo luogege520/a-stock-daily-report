@@ -48,7 +48,7 @@ def test_api(api_key):
         return False
     
     # 构建请求
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
     
     print(f"API 端点: {url[:80]}...")
     print()
