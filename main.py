@@ -7,8 +7,12 @@
 import os
 import sys
 from datetime import datetime, timezone, timedelta
+from dotenv import load_dotenv
 from generate_report import AStockReportGenerator
 from send_email import EmailSender
+
+# 加载 .env 文件（本地运行时使用，GitHub Actions 会直接使用 Secrets）
+load_dotenv()
 
 
 def main():
