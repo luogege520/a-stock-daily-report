@@ -116,15 +116,16 @@ class StepFunClient(AIModelClient):
 
 
 class DeepSeekClient(AIModelClient):
-    """DeepSeek 客户端"""
+    """DeepSeek 客户端 - 支持火山引擎"""
     
     def __init__(self, api_key: str, model_name: str = "deepseek-chat"):
         super().__init__(api_key, model_name)
-        self.base_url = "https://api.deepseek.com/v1"
+        # 火山引擎的 API 端点
+        self.base_url = "https://ark.cn-beijing.volces.com/api/v3"
     
     def generate(self, prompt: str, system_instruction: str = "") -> str:
-        """调用 DeepSeek API"""
-        print(f"[INFO] 使用 DeepSeek 模型: {self.model_name}")
+        """调用 DeepSeek API (火山引擎)"""
+        print(f"[INFO] 使用 DeepSeek 模型 (火山引擎): {self.model_name}")
         
         url = f"{self.base_url}/chat/completions"
         
@@ -157,7 +158,7 @@ class DeepSeekClient(AIModelClient):
         result = response.json()
         content = result['choices'][0]['message']['content']
         
-        print(f"[INFO] ✅ DeepSeek 生成成功 (长度: {len(content)} 字符)")
+        print(f"[INFO] ✅ DeepSeek (火山引擎) 生成成功 (长度: {len(content)} 字符)")
         return content
 
 

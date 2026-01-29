@@ -6,7 +6,7 @@
 
 ## ✨ 功能特点
 
-- 🤖 **自动化生成**：使用 Google Gemini AI 自动生成专业的市场复盘报告
+- 🤖 **多模型支持**：支持 Gemini、StepFun、DeepSeek 三个 AI 模型，自动故障转移
 - 📊 **全面数据**：涵盖指数、板块、资金流向、热点题材等
 - 📧 **邮件推送**：自动发送到指定邮箱，支持 HTML 格式
 - ⏰ **定时运行**：每个交易日晚上 21:00 自动执行
@@ -34,22 +34,56 @@
 
 在你的仓库中，进入 `Settings` -> `Secrets and variables` -> `Actions`，添加以下 Secrets：
 
+**AI 模型配置（至少配置一个）**：
+
 | Secret 名称 | 说明 | 示例 |
 |------------|------|------|
 | `GEMINI_API_KEY` | Google Gemini API 密钥 | `AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` |
+| `STEPFUN_API_KEY` | StepFun API 密钥 | `sk-xxxxx` |
+| `DEEPSEEK_API_KEY` | DeepSeek API 密钥（火山引擎） | `your_api_key` |
+
+**邮件配置**：
+
+| Secret 名称 | 说明 | 示例 |
+|------------|------|------|
 | `SENDER_EMAIL` | 发件人邮箱 | `your-email@gmail.com` |
 | `SENDER_PASSWORD` | 邮箱授权码 | `your-app-password` |
 | `RECIPIENT_EMAIL` | 收件人邮箱 | `recipient@example.com` |
 | `SMTP_SERVER` | SMTP 服务器 | `smtp.gmail.com` |
 | `SMTP_PORT` | SMTP 端口 | `587` |
 
-#### 🔑 获取 Gemini API 密钥
+**可选配置**：
+
+| Secret 名称 | 说明 | 示例 |
+|------------|------|------|
+| `PREFERRED_AI_MODEL` | 首选 AI 模型 | `Gemini` / `StepFun` / `DeepSeek` |
+
+#### 🔑 获取 AI API 密钥
+
+**1. Gemini API 密钥**
 
 1. 访问 [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. 登录您的 Google 账号
 3. 点击 "Create API Key" 或 "Get API Key"
 4. 复制生成的 API 密钥
 5. 将密钥添加到 GitHub Secrets 中的 `GEMINI_API_KEY`
+
+**2. StepFun API 密钥**
+
+1. 访问 [StepFun 平台](https://platform.stepfun.com/)
+2. 注册/登录账号
+3. 进入 API 管理
+4. 创建 API Key
+5. 复制密钥添加到 `STEPFUN_API_KEY`
+
+**3. DeepSeek API 密钥（火山引擎）**
+
+1. 访问 [火山引擎方舟](https://console.volcengine.com/ark)
+2. 注册/登录火山引擎账号
+3. 进入「方舟」产品
+4. 创建推理接入点，选择 DeepSeek 模型
+5. 获取 API Key 和模型 ID
+6. 复制密钥添加到 `DEEPSEEK_API_KEY`
 
 #### 📧 邮箱配置说明
 
