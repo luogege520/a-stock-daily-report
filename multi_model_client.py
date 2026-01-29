@@ -224,6 +224,8 @@ class MultiModelManager:
         print("开始调用 AI 模型生成报告")
         print("=" * 80)
         
+        errors = []  # 记录所有错误
+        
         # 如果指定了首选模型，先尝试使用
         if preferred_model:
             for name, client in self.clients:
@@ -233,7 +235,11 @@ class MultiModelManager:
                         content = client.generate(prompt, system_instruction)
                         return content, name
                     except Exception as e:
-                        print(f"[ERROR] {name} 调用失败: {e}")
+                        error_msg = f"{name} 失败: {str(e)}"
+                        errors.append(error_msg)
+                        print(f"[ERROR] {error_msg}")
+                        if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                            print(f"[ERROR] 响应详情: {e.response.text}")
                         print(f"[INFO] 尝试切换到备用模型...")
         
         # 依次尝试所有可用的客户端
@@ -243,16 +249,36 @@ class MultiModelManager:
                 content = client.generate(prompt, system_instruction)
                 return content, name
             except requests.exceptions.HTTPError as e:
-                print(f"[ERROR] {name} HTTP 错误: {e}")
+                error_msg = f"{name} HTTP 错误: {e}"
+                errors.append(error_msg)
+                print(f"[ERROR] {error_msg}")
                 if hasattr(e.response, 'text'):
-                    print(f"[ERROR] 响应内容: {e.response.text}")
+                    print(f"[ERROR] HTTP 状态码: {e.response.status_code}")
+                    print(f"[ERROR] 响应内容: {e.response.text[:500]}")
                 print(f"[INFO] 切换到下一个模型...")
             except Exception as e:
-                print(f"[ERROR] {name} 调用失败: {e}")
+                error_msg = f"{name} 调用失败: {str(e)}"
+                errors.append(error_msg)
+                print(f"[ERROR] {error_msg}")
+                import traceback
+                traceback.print_exc()
                 print(f"[INFO] 切换到下一个模型...")
         
-        # 所有模型都失败
-        raise Exception("所有 AI 模型都调用失败，请检查 API Key 配置和网络连接")
+        # 所有模型都失败，输出详细错误信息
+        print("\n" + "=" * 80)
+        print("❌ 所有 AI 模型都调用失败")
+        print("=" * 80)
+        print("\n错误详情：")
+        for i, error in enumerate(errors, 1):
+            print(f"{i}. {error}")
+        print("\n请检查：")
+        print("1. API Key 是否正确配置")
+        print("2. API Key 是否有效且未过期")
+        print("3. API 配额是否充足")
+        print("4. 网络连接是否正常")
+        print("=" * 80)
+        
+        raise Exception(f"所有 AI 模型都调用失败。错误: {'; '.join(errors)}")
 
 
 def test_multi_model():
