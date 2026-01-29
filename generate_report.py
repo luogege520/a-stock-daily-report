@@ -15,9 +15,18 @@ class AStockReportGenerator:
     """A股复盘报告生成器"""
     
     def __init__(self, api_key: Optional[str] = None):
+        # 检查 API Key
         self.api_key = api_key or os.getenv('GEMINI_API_KEY')
+        
+        print(f"[DEBUG] 检查 GEMINI_API_KEY 环境变量...")
         if not self.api_key:
+            print(f"[ERROR] 未找到 GEMINI_API_KEY 环境变量")
             raise ValueError("请设置 GEMINI_API_KEY 环境变量")
+        
+        # 隐藏敏感信息
+        masked_key = f"{self.api_key[:10]}...{self.api_key[-5:]}" if len(self.api_key) > 15 else "***"
+        print(f"[INFO] ✅ 成功读取 API Key: {masked_key} (长度: {len(self.api_key)})")
+        
         self.data_fetcher = AStockDataFetcher()
     
     def generate_report(self, date_str: Optional[str] = None) -> str:
@@ -157,7 +166,7 @@ class AStockReportGenerator:
 ---
 
 **报告生成时间**：{datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")} (北京时间)  
-**版本**：v2.0.0 (AkShare)
+**版本**：v2.1.0 (Gemini)
 ```
 
 请严格按照以上要求生成**中文**报告，**确保所有数值数据的准确性**。"""
@@ -167,11 +176,15 @@ class AStockReportGenerator:
     def _call_ai_api(self, prompt: str) -> str:
         """调用 Google Gemini API 生成报告"""
         print("正在调用 Google Gemini AI 生成报告...")
+        print(f"[DEBUG] API Key 长度: {len(self.api_key)}")
+        print(f"[DEBUG] API Key 前缀: {self.api_key[:10]}...")
         
         try:
             import requests
             
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={self.api_key}"
+            print(f"[DEBUG] API 端点: {url[:80]}...")
+            
             headers = {
                 "Content-Type": "application/json"
             }
@@ -200,7 +213,12 @@ class AStockReportGenerator:
             }
             
             print("  等待 AI 响应...")
+            print(f"[DEBUG] 发送 POST 请求...")
+            
             response = requests.post(url, json=payload, headers=headers, timeout=300)
+            
+            print(f"[DEBUG] HTTP 状态码: {response.status_code}")
+            
             response.raise_for_status()
             
             result = response.json()
@@ -208,18 +226,21 @@ class AStockReportGenerator:
             # 解析 Gemini 响应格式
             if 'candidates' in result and len(result['candidates']) > 0:
                 content = result['candidates'][0]['content']['parts'][0]['text']
-                print("  AI 报告生成成功")
+                print(f"[INFO] ✅ AI 报告生成成功 (长度: {len(content)} 字符)")
                 return content
             else:
+                print(f"[ERROR] Gemini API 返回格式异常")
+                print(f"[DEBUG] 响应内容: {result}")
                 raise Exception("Gemini API 返回格式异常")
             
         except requests.exceptions.HTTPError as e:
-            print(f"  HTTP 错误: {e}")
+            print(f"[ERROR] HTTP 错误: {e}")
+            print(f"[ERROR] 状态码: {e.response.status_code}")
             if hasattr(e.response, 'text'):
-                print(f"  响应内容: {e.response.text}")
+                print(f"[ERROR] 响应内容: {e.response.text}")
             return self._generate_fallback_report(prompt)
         except Exception as e:
-            print(f"  AI 生成失败: {e}")
+            print(f"[ERROR] AI 生成失败: {e}")
             import traceback
             traceback.print_exc()
             return self._generate_fallback_report(prompt)
@@ -268,7 +289,7 @@ def main():
     """主函数"""
     try:
         print("\n" + "="*60)
-        print("A股晚间复盘报告生成系统 v2.0.0 (AkShare)")
+        print("A股晚间复盘报告生成系统 v2.1.0 (Gemini)")
         print("="*60 + "\n")
         
         generator = AStockReportGenerator()
